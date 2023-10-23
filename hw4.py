@@ -202,10 +202,10 @@ def main_factors(model: RandomForestClassifier, sample_data: pd.Series):
     # Complétez la fonction.
 
     # TODO: Créez un objet capable de calculer les valeurs SHAP
-    explainer = None
+    explainer = shap.TreeExplainer(model)
 
     # TODO: Calculez les valeurs SHAP
-    shap_values = None
+    shap_values = explainer.shap_values(sample_data)
 
     # TODO: Initialisez la visualisation JavaScript SHAP
 
