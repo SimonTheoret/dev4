@@ -34,9 +34,13 @@ def encode_target_column(data) -> pd.DataFrame:
     - pd.DataFrame: DataFrame avec la colonne "is_readmitted" encodée.
     """
     data = data.copy()
+    le = LabelEncoder()
+    le.fit([False,True])
+
     # TODO: Utilisez LabelEncoder pour encoder la colonne cible.
 
-    return None
+    data["is_readmitted"] = le.transform(data["is_readmitted"])
+    return data
 
 def split_data(
     data: pd.DataFrame, target: str, test_size: float = 0.2, random_state: int = 42
@@ -78,8 +82,10 @@ def train_random_forest(
     - RandomForestClassifier: Modèle Random Forest entraîné.
     """
     # TODO: Complétez la fonction.
-
-    return None
+    #
+    rfc = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=random_state)
+    rfc.fit(X_train, y_train)
+    return rfc
 
 def evaluate_model(
     model: RandomForestClassifier, X_test: pd.DataFrame, y_test: pd.Series
@@ -100,8 +106,12 @@ def evaluate_model(
     # TODO: Calculez la précision
 
     # TODO: Obtenez le rapport de classification
+    # 
 
-    return None
+    pred = model.predict(X_test)
+    acc = accuracy_score(y_test, pred)
+    report = classification_report(y_test,pred )
+    return (acc, report)
 
 def calculate_permutation_importance(
     model,
@@ -118,11 +128,11 @@ def calculate_permutation_importance(
     - y_val: Étiquettes cibles de l'ensemble de validation.
 
     Renvoie:
-    - eli5.PermutationImportance: Objet PermutationImportance avec les importances calculées. Nous n'utiliserons que le modèle et la valeur prédéfinie pour random_state.
+    - eli5.PermutationImportance: Objet PermutationImportance avec les importances calculées. Nous n'utiliserons que le modèle et la valeur prédéfinie pour random_stae.
+
     """
     # TODO: Complétez la fonction.
-
-    return None
+    return PermutationImportance(model, random_state = random_sate).fit(X_val, y_val)
 
 def plot_partial_dependence(model, X_val: pd.DataFrame, feature_name: str):
     """
@@ -138,11 +148,11 @@ def plot_partial_dependence(model, X_val: pd.DataFrame, feature_name: str):
     # TODO: Complétez la fonction. Utilisez le nom pdp_display pour la variable utilisée pour stocker votre objet de tracé de DP.
     # Votre code ici
 
-    # Lorsque vous avez votre code prêt, décommentez le code suivant.
+    pdp_display = PartialDependenceDisplay.from_estimator(model, X_val, features = feature_name)    # Lorsque vous avez votre code prêt, décommentez le code suivant.
 
-    # pdp_display.figure_.suptitle(f"Tracé de Dépendance Partielle pour {feature_name}")
+    pdp_display.figure_.suptitle(f"Tracé de Dépendance Partielle pour {feature_name}")
 
-    # plt.grid(True)
+    plt.grid(True)
 
 def plot_mean_readmission_vs_time(X_train, y_train):
     """
