@@ -148,7 +148,7 @@ def plot_partial_dependence(model, X_val: pd.DataFrame, feature_name: str):
     # TODO: Complétez la fonction. Utilisez le nom pdp_display pour la variable utilisée pour stocker votre objet de tracé de DP.
     # Votre code ici
 
-    pdp_display = PartialDependenceDisplay.from_estimator(model, X_val, features = feature_name)    # Lorsque vous avez votre code prêt, décommentez le code suivant.
+    pdp_display = PartialDependenceDisplay.from_estimator(model, X_val, features = [feature_name])    # Lorsque vous avez votre code prêt, décommentez le code suivant.
 
     pdp_display.figure_.suptitle(f"Tracé de Dépendance Partielle pour {feature_name}")
 
@@ -165,11 +165,13 @@ def plot_mean_readmission_vs_time(X_train, y_train):
     # Complétez la fonction.
 
     # TODO: Combinez les caractéristiques et les étiquettes cibles dans un seul DataFrame
-    all_train = None
+
+    all_train =X_train.join(y_train)
 
     # TODO: Calculez la moyenne de 'is_readmitted' pour chaque valeur 'time_in_hospital'
 
-    mean_readmission = None
+    mean_readmission = all_train[["is_readmitted", "time_in_hospital"]].groupby([ "time_in_hospital" ]).mean()["is_readmitted"]
+    print(mean_readmission.head())
 
     # Nous créerons un graphique informatif et visuellement attrayant.
 
@@ -202,13 +204,13 @@ def main_factors(model: RandomForestClassifier, sample_data: pd.Series):
     # Complétez la fonction.
 
     # TODO: Créez un objet capable de calculer les valeurs SHAP
-    explainer = shap.TreeExplainer(model)
+    explainer = shap.Explainer(model)
 
     # TODO: Calculez les valeurs SHAP
     shap_values = explainer.shap_values(sample_data)
 
     # TODO: Initialisez la visualisation JavaScript SHAP
-
+    shap.initjs()
     # Nous créons et renvoyons un tracé de force SHAP
     return shap.force_plot(explainer.expected_value[1], shap_values[1], sample_data)
 
@@ -219,7 +221,9 @@ def remove_outliers_iqr(
     threshold: float = 1.5,
 ) -> pd.DataFrame:
     """
-    Supprime les lignes avec des valeurs aberrantes des colonnes de caractéristiques spécifiques en ignorant une colonne cible en utilisant la méthode IQR.
+    Supprime les lignes avec des valeurs aberrantes des colonnes de
+    caractéristiques spécifiques en ignorant une colonne cible en utilisant la
+    méthode IQR.
 
     Paramètres:
         df (pd.DataFrame): Le DataFrame d'entrée contenant à la fois des colonnes de caractéristiques numériques et de prédiction.
@@ -232,19 +236,24 @@ def remove_outliers_iqr(
     """
     # Créez une copie du DataFrame pour éviter de modifier l'original
     df_cleaned = df.copy()
-
     # TODO: Complétez la fonction.
-
     # TODO: Parcourez chaque colonne de caractéristiques spécifiée. Décommentez la boucle for et l'instruction if lorsque vous êtes prêt à tester votre code.
-    # for column in columns_to_process:
-    # if column != predictor_column and column in df.columns:
+    for column in columns_to_process:
+        if column != predictor_column and column in df.columns:
+            col = df[column]
+            q1 = col.quantile(0.25)
+            q3 = col.quantile(0.75)
+            iqr = q3 - q1
+            lower = q1 - threshold * iqr
+            upper = q3 + threshold * iqr
+            df_cleaned = df_cleaned[(df_cleaned[column] >= lower) & (df_cleaned[column] <= upper)]
+    df_cleaned = df_cleaned.reset_index()
+    return df_cleaned
     # TODO: Effectuez les étapes nécessaires pour mettre en œuvre la méthode IQR.
 
     # TODO: Identifiez et supprimez les lignes avec des valeurs en dehors des limites
 
     # TODO: Réinitialisez l'index du DataFrame nettoyé
-
-    return None
 
 def add_absolute_coordinate_changes(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -260,5 +269,8 @@ def add_absolute_coordinate_changes(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
     # TODO: Calculez les changements absolus de longitude et de latitude
-
-    return None
+    df["abs_lon_change"] = df["pickup_longitude"] - df["dropoff_longitude"]
+    df["abs_lat_change"] = df["pickup_latitude"] - df["dropoff_latitude"]
+    df["abs_lon_change"] = df["abs_lon_change"].abs()
+    df["abs_lat_change"] = df["abs_lat_change"].abs()
+    return df
